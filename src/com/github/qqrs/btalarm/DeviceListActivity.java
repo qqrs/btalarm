@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.qqrsmith.btalarm;
+package com.github.qqrs.btalarm;
 
 import java.util.Set;
 
@@ -36,7 +36,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
-import com.github.qqrsmith.btalarm.R;
+import com.github.qqrs.btalarm.R;
 
 /**
  * This Activity appears as a dialog. It lists any paired devices and

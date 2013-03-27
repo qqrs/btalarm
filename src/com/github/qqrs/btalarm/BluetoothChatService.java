@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.qqrsmith.btalarm;
+package com.github.qqrs.btalarm;
 
 import java.io.IOException;
 import java.io.InputStream;

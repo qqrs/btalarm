@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.qqrsmith.btalarm;
+package com.github.qqrs.btalarm;
 
 import android.app.ActionBar;
 import android.app.Activity;
@@ -41,6 +41,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.github.qqrs.btalarm.R;
 
 /**
  * This is the main Activity that displays the current chat session.
