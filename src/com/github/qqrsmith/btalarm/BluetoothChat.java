@@ -20,7 +20,10 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -30,7 +33,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
@@ -39,7 +41,6 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.github.qqrsmith.btalarm.R;
 
 /**
  * This is the main Activity that displays the current chat session.
@@ -65,17 +66,17 @@ public class BluetoothChat extends Activity {
     private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
     private static final int REQUEST_ENABLE_BT = 3;
 
+    // Alarm events
+	public static final String ALARM_ALERT_ACTION = "com.android.deskclock.ALARM_ALERT";
+	public static final String ALARM_SNOOZE_ACTION = "com.android.deskclock.ALARM_SNOOZE";
+	public static final String ALARM_DISMISS_ACTION = "com.android.deskclock.ALARM_DISMISS";
+	public static final String ALARM_DONE_ACTION = "com.android.deskclock.ALARM_DONE";
+
     // Layout Views
     private ListView mConversationView;
     private EditText mOutEditText;
     private Button mSendButton;
 
-    private Button mCmdButton;
-    private Button mEndButton;
-    private Button mOnButton;
-    private Button mOffButton;
-    private Button mStatusButton;
-    
     // Name of the connected device
     private String mConnectedDeviceName = null;
     // Array adapter for the conversation thread
@@ -87,6 +88,15 @@ public class BluetoothChat extends Activity {
     // Member object for the chat services
     private BluetoothChatService mChatService = null;
 
+    // Buttons for RN-41 GPIO control
+    private Button mCmdButton;
+    private Button mEndButton;
+    private Button mOnButton;
+    private Button mOffButton;
+    private Button mStatusButton;
+    
+    // Alarm events from Android alarm clock
+    private BroadcastReceiver mAlarmReceiver;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -119,7 +129,9 @@ public class BluetoothChat extends Activity {
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
         // Otherwise, setup the chat session
         } else {
-            if (mChatService == null) setupChat();
+            if (mChatService == null) { 
+                setupChat();
+            }
         }
     }
 
@@ -163,6 +175,19 @@ public class BluetoothChat extends Activity {
             }
         });
 
+        // Initialize the BluetoothChatService to perform bluetooth connections
+        mChatService = new BluetoothChatService(this, mHandler);
+
+        // Initialize the buffer for outgoing messages
+        mOutStringBuffer = new StringBuffer("");
+
+        setupGpioButtons();
+        setupAlarmWatch();
+    }
+
+    private void setupGpioButtons() {
+        Log.d(TAG, "setupGpioButtons()");
+
         mCmdButton = (Button) findViewById(R.id.button_cmd);
         mCmdButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
@@ -193,12 +218,35 @@ public class BluetoothChat extends Activity {
                 sendMessage("g&\n");
             }
         });
-        
-        // Initialize the BluetoothChatService to perform bluetooth connections
-        mChatService = new BluetoothChatService(this, mHandler);
+    }
 
-        // Initialize the buffer for outgoing messages
-        mOutStringBuffer = new StringBuffer("");
+
+    private void setupAlarmWatch() {
+        Log.d(TAG, "setupAlarmWatch()");
+
+        mAlarmReceiver = new BroadcastReceiver() 
+        {
+            @Override
+            public void onReceive(Context context, Intent intent) 
+            {
+                String action = intent.getAction();
+    
+                if (action.equals(BluetoothChat.ALARM_ALERT_ACTION))
+                {
+                    sendMessage("S&,0808\n");
+                }
+
+                if (action.equals(BluetoothChat.ALARM_DISMISS_ACTION) || action.equals(BluetoothChat.ALARM_SNOOZE_ACTION) || action.equals(BluetoothChat.ALARM_DONE_ACTION))
+                {
+                }
+            }
+        };
+
+	    IntentFilter filter = new IntentFilter(BluetoothChat.ALARM_ALERT_ACTION);
+	    filter.addAction(BluetoothChat.ALARM_DISMISS_ACTION);
+	    filter.addAction(BluetoothChat.ALARM_SNOOZE_ACTION);
+	    filter.addAction(BluetoothChat.ALARM_DONE_ACTION);
+	    registerReceiver(mAlarmReceiver, filter);
     }
 
     @Override
