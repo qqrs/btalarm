@@ -70,6 +70,12 @@ public class BluetoothChat extends Activity {
     private EditText mOutEditText;
     private Button mSendButton;
 
+    private Button mCmdButton;
+    private Button mEndButton;
+    private Button mOnButton;
+    private Button mOffButton;
+    private Button mStatusButton;
+    
     // Name of the connected device
     private String mConnectedDeviceName = null;
     // Array adapter for the conversation thread
@@ -157,6 +163,37 @@ public class BluetoothChat extends Activity {
             }
         });
 
+        mCmdButton = (Button) findViewById(R.id.button_cmd);
+        mCmdButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                sendMessage("$$$");
+            }
+        });
+        mEndButton = (Button) findViewById(R.id.button_end);
+        mEndButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                sendMessage("---\n");
+            }
+        });
+        mOnButton = (Button) findViewById(R.id.button_on);
+        mOnButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                sendMessage("S&,0808\n");
+            }
+        });
+        mOffButton = (Button) findViewById(R.id.button_off);
+        mOffButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                sendMessage("S&,0800\n");
+            }
+        });
+        mStatusButton = (Button) findViewById(R.id.button_status);
+        mStatusButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View v) {
+                sendMessage("g&\n");
+            }
+        });
+        
         // Initialize the BluetoothChatService to perform bluetooth connections
         mChatService = new BluetoothChatService(this, mHandler);
 
