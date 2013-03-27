@@ -19,6 +19,37 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     >
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        >
+        <Button android:id="@+id/button_cmd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CMD"
+        />
+        <Button android:id="@+id/button_end"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="END"
+        />
+        <Button android:id="@+id/button_on"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="On"
+        />
+        <Button android:id="@+id/button_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Off"
+        />
+        <Button android:id="@+id/button_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status"
+        />
+    </LinearLayout>
     <ListView android:id="@+id/in"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
