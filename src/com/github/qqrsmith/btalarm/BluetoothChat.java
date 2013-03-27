@@ -230,6 +230,7 @@ public class BluetoothChat extends Activity {
             public void onReceive(Context context, Intent intent) 
             {
                 String action = intent.getAction();
+                Log.d(TAG, "received action: " + action);
     
                 if (action.equals(BluetoothChat.ALARM_ALERT_ACTION))
                 {
