@@ -18,6 +18,9 @@ public class RN41Gpio {
     public static final int CMD_OFF = 4;
     public static final int CMD_STATUS = 5;
 
+    public static final int GPIO_ON = 1;
+    public static final int GPIO_OFF = 0;
+
     private static final String MSG_BEGIN = "$$$";
     private static final String MSG_END = "---\n";
     private static final String MSG_ON = "S&,0808\n";
@@ -66,6 +69,17 @@ public class RN41Gpio {
         if (msg.length() > 0) {
             byte[] send = msg.getBytes();
             mService.write(send);
+        }
+    }
+
+    public void setGpio(int state) {
+        switch (state) {
+        case GPIO_ON:
+            sendCmd(CMD_ON);
+            break;
+        case GPIO_OFF:
+            sendCmd(CMD_OFF);
+            break;
         }
     }
 

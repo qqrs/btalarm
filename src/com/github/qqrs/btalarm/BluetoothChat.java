@@ -205,6 +205,10 @@ public class BluetoothChat extends Activity {
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mLastBluetoothDeviceAddress);
                 // Attempt to connect to the device
                 mChatService.connect(device);
+            } else {
+                // No saved Bluetooth device -- show the device list
+                Intent intent = new Intent(this, DeviceListActivity.class);
+                startActivityForResult(intent, REQUEST_CONNECT_DEVICE_INSECURE);
             }
         }
 
@@ -262,12 +266,12 @@ public class BluetoothChat extends Activity {
     
                 if (action.equals(BluetoothChat.ALARM_ALERT_ACTION))
                 {
-                    mRN41.sendCmd(RN41Gpio.CMD_ON);
+                    mRN41.setGpio(RN41Gpio.GPIO_ON);
                 }
 
                 if (action.equals(BluetoothChat.ALARM_DISMISS_ACTION) || action.equals(BluetoothChat.ALARM_SNOOZE_ACTION) || action.equals(BluetoothChat.ALARM_DONE_ACTION))
                 {
-                    mRN41.sendCmd(RN41Gpio.CMD_OFF);
+                    mRN41.setGpio(RN41Gpio.GPIO_OFF);
                 }
             }
         };
@@ -302,7 +306,14 @@ public class BluetoothChat extends Activity {
     public void onDestroy() {
         super.onDestroy();
         // Stop the Bluetooth chat services
-        if (mChatService != null) mChatService.stop();
+
+        if (mChatService != null) {
+            // TODO: is this needed? will msg go out before service is stopped?
+            // Exit command mode on RN-41 module
+            mRN41.sendCmd(RN41Gpio.CMD_END);
+
+            mChatService.stop();
+        }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
     }
 
@@ -374,6 +385,9 @@ public class BluetoothChat extends Activity {
                 case BluetoothChatService.STATE_CONNECTED:
                     setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
                     mConversationArrayAdapter.clear();
+
+                    // Enter command mode on RN-41 module
+                    mRN41.sendCmd(RN41Gpio.CMD_BEGIN);
                     break;
                 case BluetoothChatService.STATE_CONNECTING:
                     setStatus(R.string.title_connecting);
