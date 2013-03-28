@@ -198,6 +198,16 @@ public class BluetoothChat extends Activity {
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
 
+        if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
+            // attempt to autoconnect to last Bluetooth device
+            if(mLastBluetoothDeviceAddress != null) {
+                // Get the BluetoothDevice object
+                BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(mLastBluetoothDeviceAddress);
+                // Attempt to connect to the device
+                mChatService.connect(device);
+            }
+        }
+
         mRN41 = new RN41Gpio(mChatService, this);
         setupGpioButtons();
         setupAlarmWatch();
