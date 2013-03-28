@@ -42,6 +42,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.github.qqrs.btalarm.R;
+import com.github.qqrs.btalarm.RN41Gpio;
 
 /**
  * This is the main Activity that displays the current chat session.
@@ -98,6 +99,9 @@ public class BluetoothChat extends Activity {
     
     // Alarm events from Android alarm clock
     private BroadcastReceiver mAlarmReceiver;
+
+    // RN41 Bluetooth module GPIO commands 
+    private RN41Gpio mRN41;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -182,6 +186,7 @@ public class BluetoothChat extends Activity {
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
 
+        mRN41 = new RN41Gpio(mChatService, this);
         setupGpioButtons();
         setupAlarmWatch();
     }
@@ -192,31 +197,31 @@ public class BluetoothChat extends Activity {
         mCmdButton = (Button) findViewById(R.id.button_cmd);
         mCmdButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                sendMessage("$$$");
+                mRN41.sendCmd(RN41Gpio.CMD_BEGIN);
             }
         });
         mEndButton = (Button) findViewById(R.id.button_end);
         mEndButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                sendMessage("---\n");
+                mRN41.sendCmd(RN41Gpio.CMD_END);
             }
         });
         mOnButton = (Button) findViewById(R.id.button_on);
         mOnButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                sendMessage("S&,0808\n");
+                mRN41.sendCmd(RN41Gpio.CMD_ON);
             }
         });
         mOffButton = (Button) findViewById(R.id.button_off);
         mOffButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                sendMessage("S&,0800\n");
+                mRN41.sendCmd(RN41Gpio.CMD_OFF);
             }
         });
         mStatusButton = (Button) findViewById(R.id.button_status);
         mStatusButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                sendMessage("g&\n");
+                mRN41.sendCmd(RN41Gpio.CMD_STATUS);
             }
         });
     }
@@ -235,12 +240,12 @@ public class BluetoothChat extends Activity {
     
                 if (action.equals(BluetoothChat.ALARM_ALERT_ACTION))
                 {
-                    sendMessage("S&,0808\n");
+                    mRN41.sendCmd(RN41Gpio.CMD_ON);
                 }
 
                 if (action.equals(BluetoothChat.ALARM_DISMISS_ACTION) || action.equals(BluetoothChat.ALARM_SNOOZE_ACTION) || action.equals(BluetoothChat.ALARM_DONE_ACTION))
                 {
-                    sendMessage("S&,0808\n");
+                    mRN41.sendCmd(RN41Gpio.CMD_OFF);
                 }
             }
         };
