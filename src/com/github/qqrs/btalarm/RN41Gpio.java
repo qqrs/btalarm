@@ -27,6 +27,9 @@ public class RN41Gpio {
     private BluetoothChatService mService;
     private Context mContext;
 
+    private boolean mCmdModeActive = false;
+    private boolean mGPIOActive = false;
+
     public void sendCmd(int cmd) {
         String msg = null;
 
@@ -38,15 +41,21 @@ public class RN41Gpio {
 
         switch (cmd) {
         case CMD_BEGIN:
+            // TODO: check before sending
+            mCmdModeActive = true;
             msg = MSG_BEGIN;
             break;
         case CMD_END:
+            mCmdModeActive = false;
             msg = MSG_END;
             break;
         case CMD_ON:
+            // TODO: check before sending
+            mGPIOActive = true;
             msg = MSG_ON;
             break;
         case CMD_OFF:
+            mGPIOActive = true;
             msg = MSG_OFF;
             break;
         case CMD_STATUS:
@@ -64,5 +73,16 @@ public class RN41Gpio {
         mService = service;
         mContext = context;
 	}
+
+    /*
+    public void onStop() {
+        if (mCmdModeActive) {
+            if (mGPIOActive) {
+                sendCmd(CMD_OFF);
+            }
+            sendCmd(CMD_END);
+        }
+    }
+    */
 
 }
