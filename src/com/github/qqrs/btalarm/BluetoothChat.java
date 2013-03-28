@@ -240,6 +240,7 @@ public class BluetoothChat extends Activity {
 
                 if (action.equals(BluetoothChat.ALARM_DISMISS_ACTION) || action.equals(BluetoothChat.ALARM_SNOOZE_ACTION) || action.equals(BluetoothChat.ALARM_DONE_ACTION))
                 {
+                    sendMessage("S&,0808\n");
                 }
             }
         };
