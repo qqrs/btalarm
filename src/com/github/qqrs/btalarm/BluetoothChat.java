@@ -24,6 +24,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -74,6 +75,9 @@ public class BluetoothChat extends Activity {
 	public static final String ALARM_DISMISS_ACTION = "com.android.deskclock.ALARM_DISMISS";
 	public static final String ALARM_DONE_ACTION = "com.android.deskclock.ALARM_DONE";
 
+    // Preferences file name
+    public static final String PREFS_NAME = "btalarm_prefs";
+
     // Layout Views
     private ListView mConversationView;
     private EditText mOutEditText;
@@ -103,6 +107,9 @@ public class BluetoothChat extends Activity {
     // RN41 Bluetooth module GPIO commands 
     private RN41Gpio mRN41;
 
+    // Last Bluetooth device for autoconnect, persisted via SharedPreferences
+    private String mLastBluetoothDeviceAddress;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -120,6 +127,12 @@ public class BluetoothChat extends Activity {
             finish();
             return;
         }
+
+
+        // Restore preferences
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        mLastBluetoothDeviceAddress = settings.getString("lastBluetoothDeviceAddress", null);
+        if(D) Log.e(TAG, "lastBluetoothDeviceAddress: " + mLastBluetoothDeviceAddress);
     }
 
     @Override
@@ -255,6 +268,13 @@ public class BluetoothChat extends Activity {
 	    filter.addAction(BluetoothChat.ALARM_SNOOZE_ACTION);
 	    filter.addAction(BluetoothChat.ALARM_DONE_ACTION);
 	    registerReceiver(mAlarmReceiver, filter);
+    }
+
+    private void persistLastBluetoothDeviceAddress() {
+      SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+      SharedPreferences.Editor editor = settings.edit();
+      editor.putString("lastBluetoothDeviceAddress", mLastBluetoothDeviceAddress);
+      editor.commit();
     }
 
     @Override
@@ -414,6 +434,11 @@ public class BluetoothChat extends Activity {
         // Get the device MAC address
         String address = data.getExtras()
             .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+
+        // Store and persist address as last Bluetooth device
+        mLastBluetoothDeviceAddress = address;
+        persistLastBluetoothDeviceAddress();
+
         // Get the BluetoothDevice object
         BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
         // Attempt to connect to the device
