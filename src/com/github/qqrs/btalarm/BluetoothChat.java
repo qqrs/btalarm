@@ -49,7 +49,8 @@ import com.github.qqrs.btalarm.RN41Gpio;
  * This is the main Activity that displays the current chat session.
  */
 public class BluetoothChat extends Activity {
-    // Debugging
+    
+	// Debugging
     private static final String TAG = "BluetoothChat";
     private static final boolean D = true;
 
@@ -59,6 +60,8 @@ public class BluetoothChat extends Activity {
     public static final int MESSAGE_WRITE = 3;
     public static final int MESSAGE_DEVICE_NAME = 4;
     public static final int MESSAGE_TOAST = 5;
+    public static final int MESSAGE_CONNECTION_FAILED = 6;
+    public static final int MESSAGE_CONNECTION_LOST = 7;
 
     // Key names received from the BluetoothChatService Handler
     public static final String DEVICE_NAME = "device_name";
@@ -75,7 +78,8 @@ public class BluetoothChat extends Activity {
 	public static final String ALARM_DONE_ACTION = "com.android.deskclock.ALARM_DONE";
 
     // Preferences file name
-    public static final String PREFS_NAME = "btalarm_prefs";
+    private static final String PREFS_NAME = "btalarm_prefs";
+    private static final String PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS = "lastBluetoothDeviceAddress";
 
     // Layout Views
     private ListView mConversationView;
@@ -92,13 +96,6 @@ public class BluetoothChat extends Activity {
     private BluetoothAdapter mBluetoothAdapter = null;
     // Member object for the chat services
     private BluetoothChatService mChatService = null;
-
-    // Buttons for RN-41 GPIO control
-    private Button mCmdButton;
-    private Button mEndButton;
-    private Button mOnButton;
-    private Button mOffButton;
-    private Button mStatusButton;
     
     // Alarm events from Android alarm clock
     private BroadcastReceiver mAlarmReceiver;
@@ -108,6 +105,7 @@ public class BluetoothChat extends Activity {
 
     // Last Bluetooth device for autoconnect, persisted via SharedPreferences
     private String mLastBluetoothDeviceAddress;
+	private boolean mAreButtonsEnabled;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -129,8 +127,8 @@ public class BluetoothChat extends Activity {
 
 
         // Restore preferences
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
-        mLastBluetoothDeviceAddress = settings.getString("lastBluetoothDeviceAddress", null);
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        mLastBluetoothDeviceAddress = settings.getString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
         if(D) Log.e(TAG, "lastBluetoothDeviceAddress: " + mLastBluetoothDeviceAddress);
     }
 
@@ -213,45 +211,39 @@ public class BluetoothChat extends Activity {
         }
 
         mRN41 = new RN41Gpio(mChatService, this);
-        setupGpioButtons();
         setupAlarmWatch();
     }
-
-    private void setupGpioButtons() {
-        Log.d(TAG, "setupGpioButtons()");
-
-        mCmdButton = (Button) findViewById(R.id.button_cmd);
-        mCmdButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                mRN41.sendCmd(RN41Gpio.CMD_BEGIN);
+    
+    public void onBtnClicked(View btn) {
+    	
+    	if (mAreButtonsEnabled) {
+    	
+	    	int id = btn.getId();
+	    	int command = -1;
+	    	
+	    	switch (id) {
+	    	case R.id.button_cmd:
+	    		command = RN41Gpio.CMD_BEGIN;
+	    		break;
+	    	case R.id.button_end:
+	    		command = RN41Gpio.CMD_END;
+	    		break;
+	    	case R.id.button_on:
+	    		command = RN41Gpio.CMD_ON;
+	    		break;
+	    	case R.id.button_off:
+	    		command = RN41Gpio.CMD_OFF;
+	    		break;
+	    	case R.id.button_status:
+	    		command = RN41Gpio.CMD_STATUS;
+	    		break;
+			}
+	    	
+            if (command != -1) {
+                mRN41.sendCmd(command);
             }
-        });
-        mEndButton = (Button) findViewById(R.id.button_end);
-        mEndButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                mRN41.sendCmd(RN41Gpio.CMD_END);
-            }
-        });
-        mOnButton = (Button) findViewById(R.id.button_on);
-        mOnButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                mRN41.sendCmd(RN41Gpio.CMD_ON);
-            }
-        });
-        mOffButton = (Button) findViewById(R.id.button_off);
-        mOffButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                mRN41.sendCmd(RN41Gpio.CMD_OFF);
-            }
-        });
-        mStatusButton = (Button) findViewById(R.id.button_status);
-        mStatusButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                mRN41.sendCmd(RN41Gpio.CMD_STATUS);
-            }
-        });
+        }
     }
-
 
     private void setupAlarmWatch() {
         Log.d(TAG, "setupAlarmWatch()");
@@ -284,9 +276,9 @@ public class BluetoothChat extends Activity {
     }
 
     private void persistLastBluetoothDeviceAddress() {
-      SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+      SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
       SharedPreferences.Editor editor = settings.edit();
-      editor.putString("lastBluetoothDeviceAddress", mLastBluetoothDeviceAddress);
+      editor.putString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, mLastBluetoothDeviceAddress);
       editor.commit();
     }
 
@@ -300,6 +292,8 @@ public class BluetoothChat extends Activity {
     public void onStop() {
         super.onStop();
         if(D) Log.e(TAG, "-- ON STOP --");
+        
+        mAreButtonsEnabled = false;
     }
 
     @Override
@@ -388,6 +382,7 @@ public class BluetoothChat extends Activity {
 
                     // Enter command mode on RN-41 module
                     mRN41.sendCmd(RN41Gpio.CMD_BEGIN);
+                    mAreButtonsEnabled = true;
                     break;
                 case BluetoothChatService.STATE_CONNECTING:
                     setStatus(R.string.title_connecting);
@@ -416,9 +411,15 @@ public class BluetoothChat extends Activity {
                 Toast.makeText(getApplicationContext(), "Connected to "
                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
                 break;
-            case MESSAGE_TOAST:
-                Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
-                               Toast.LENGTH_SHORT).show();
+            case MESSAGE_CONNECTION_FAILED:
+                Toast.makeText(getApplicationContext(), "Unable to connect device",
+                				Toast.LENGTH_SHORT).show();
+                mAreButtonsEnabled = false;
+                break;
+            case MESSAGE_CONNECTION_LOST:
+                Toast.makeText(getApplicationContext(), "Device connection was lost",
+                				Toast.LENGTH_SHORT).show();
+                mAreButtonsEnabled = false;
                 break;
             }
         }

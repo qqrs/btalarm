@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2009 The Android Open Source Project
+<!--
+     Copyright (C) 2009 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,63 +16,76 @@
 -->
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
+    android:orientation="vertical" >
+
     <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
-        <Button android:id="@+id/button_cmd"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/button_cmd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="CMD"
-        />
-        <Button android:id="@+id/button_end"
+            android:onClick="onBtnClicked"
+            android:text="CMD" />
+
+        <Button
+            android:id="@+id/button_end"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="END"
-        />
-        <Button android:id="@+id/button_on"
+            android:onClick="onBtnClicked"
+            android:text="END" />
+
+        <Button
+            android:id="@+id/button_on"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="On"
-        />
-        <Button android:id="@+id/button_off"
+            android:onClick="onBtnClicked"
+            android:text="On" />
+
+        <Button
+            android:id="@+id/button_off"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Off"
-        />
-        <Button android:id="@+id/button_status"
+            android:onClick="onBtnClicked"
+            android:text="Off" />
+
+        <Button
+            android:id="@+id/button_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Status"
-        />
+            android:onClick="onBtnClicked"
+            android:text="Status" />
     </LinearLayout>
-    <ListView android:id="@+id/in"
+
+    <ListView
+        android:id="@+id/in"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll"
         android:layout_weight="1"
-    />
+        android:stackFromBottom="true"
+        android:transcriptMode="alwaysScroll" />
+
     <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        >
-        <EditText android:id="@+id/edit_text_out"
+        android:orientation="horizontal" >
+
+        <EditText
+            android:id="@+id/edit_text_out"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:layout_gravity="bottom"
-        />
-        <Button android:id="@+id/button_send"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/button_send"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/send"
-        />
+            android:text="@string/send" />
     </LinearLayout>
+
 </LinearLayout>
