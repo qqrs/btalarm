@@ -6,7 +6,7 @@ import android.app.Application;
 public class BtAlarmApplication extends Application {
 	
 	private AlarmReceiver mReceiver;
-	private BluetoothChatService mService;
+	private BluetoothService mService;
 	
 	public AlarmReceiver getAlarmReceiver() {
 		
@@ -17,10 +17,10 @@ public class BtAlarmApplication extends Application {
 		return mReceiver;
 	}
 	
-	public BluetoothChatService getBluetoothChatService() {
+	public BluetoothService getBluetoothChatService() {
 		
 		if (mService == null) {
-			mService = new BluetoothChatService(this);
+			mService = new BluetoothService(this);
 		}
 		
 		return mService;

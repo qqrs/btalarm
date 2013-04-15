@@ -48,7 +48,7 @@ public class BluetoothChat extends Activity {
     private static final String TAG = "BluetoothChat";
     private static final boolean D = true;
 
-    // Key names received from the BluetoothChatService Handler
+    // Key names received from the BluetoothService Handler
     public static final String DEVICE_NAME = "device_name";
     public static final String TOAST = "toast";
 
@@ -79,7 +79,7 @@ public class BluetoothChat extends Activity {
     // String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
     // Member object for the chat services
-    private BluetoothChatService mChatService = null;
+    private BluetoothService mChatService = null;
     
 	private boolean mAreButtonsEnabled;
 
@@ -136,7 +136,7 @@ public class BluetoothChat extends Activity {
         // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
         if (mChatService != null) {
             // Only if the state is STATE_NONE, do we know that we haven't started already
-            if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
+            if (mChatService.getState() == BluetoothService.STATE_NONE) {
               // Start the Bluetooth chat services
               mChatService.start();
             }
@@ -166,7 +166,7 @@ public class BluetoothChat extends Activity {
             }
         });
 
-        // Initialize the BluetoothChatService to perform bluetooth connections
+        // Initialize the BluetoothService to perform bluetooth connections
         BtAlarmApplication app = (BtAlarmApplication) getApplication();
         mChatService = app.getBluetoothChatService();
         mChatService.addHandler(mHandler);
@@ -174,7 +174,7 @@ public class BluetoothChat extends Activity {
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
 
-        if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
+        if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
             // attempt to autoconnect to last Bluetooth device
         	
         	SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -270,14 +270,14 @@ public class BluetoothChat extends Activity {
      */
     private void sendMessage(String message) {
         // Check that we're actually connected before trying anything
-        if (mChatService.getState() != BluetoothChatService.STATE_CONNECTED) {
+        if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
             Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
             return;
         }
 
         // Check that there's actually something to send
         if (message.length() > 0) {
-            // Get the message bytes and tell the BluetoothChatService to write
+            // Get the message bytes and tell the BluetoothService to write
             byte[] send = message.getBytes();
             mChatService.write(send);
 
@@ -311,53 +311,53 @@ public class BluetoothChat extends Activity {
         actionBar.setSubtitle(subTitle);
     }
 
-    // The Handler that gets information back from the BluetoothChatService
+    // The Handler that gets information back from the BluetoothService
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-            case BluetoothChatService.MESSAGE_STATE_CHANGE:
+            case BluetoothService.MESSAGE_STATE_CHANGE:
                 if(D) Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
                 switch (msg.arg1) {
-                case BluetoothChatService.STATE_CONNECTED:
+                case BluetoothService.STATE_CONNECTED:
                     setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
                     mConversationArrayAdapter.clear();
 
                     mAreButtonsEnabled = true;
                     break;
-                case BluetoothChatService.STATE_CONNECTING:
+                case BluetoothService.STATE_CONNECTING:
                     setStatus(R.string.title_connecting);
                     break;
-                case BluetoothChatService.STATE_LISTEN:
-                case BluetoothChatService.STATE_NONE:
+                case BluetoothService.STATE_LISTEN:
+                case BluetoothService.STATE_NONE:
                     setStatus(R.string.title_not_connected);
                     break;
                 }
                 break;
-            case BluetoothChatService.MESSAGE_WRITE:
+            case BluetoothService.MESSAGE_WRITE:
                 byte[] writeBuf = (byte[]) msg.obj;
                 // construct a string from the buffer
                 String writeMessage = new String(writeBuf);
                 mConversationArrayAdapter.add("Me:  " + writeMessage);
                 break;
-            case BluetoothChatService.MESSAGE_READ:
+            case BluetoothService.MESSAGE_READ:
                 byte[] readBuf = (byte[]) msg.obj;
                 // construct a string from the valid bytes in the buffer
                 String readMessage = new String(readBuf, 0, msg.arg1);
                 mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
                 break;
-            case BluetoothChatService.MESSAGE_DEVICE_NAME:
+            case BluetoothService.MESSAGE_DEVICE_NAME:
                 // save the connected device's name
                 mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
                 Toast.makeText(getApplicationContext(), "Connected to "
                                + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
                 break;
-            case BluetoothChatService.MESSAGE_CONNECTION_FAILED:
+            case BluetoothService.MESSAGE_CONNECTION_FAILED:
                 Toast.makeText(getApplicationContext(), "Unable to connect device",
                 				Toast.LENGTH_SHORT).show();
                 mAreButtonsEnabled = false;
                 break;
-            case BluetoothChatService.MESSAGE_CONNECTION_LOST:
+            case BluetoothService.MESSAGE_CONNECTION_LOST:
                 Toast.makeText(getApplicationContext(), "Device connection was lost",
                 				Toast.LENGTH_SHORT).show();
                 mAreButtonsEnabled = false;

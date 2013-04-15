@@ -50,12 +50,12 @@ public class AlarmReceiver extends BroadcastReceiver
 	private void turnAlarmOn(Context context) {
 		
 		BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
-		BluetoothChatService service = app.getBluetoothChatService();
+		BluetoothService service = app.getBluetoothChatService();
 		
 		mActiveAlarmContext = context;
 		
 		final int state = service.getState();
-		if (state != BluetoothChatService.STATE_CONNECTED && state != BluetoothChatService.STATE_CONNECTING) {
+		if (state != BluetoothService.STATE_CONNECTED && state != BluetoothService.STATE_CONNECTING) {
 			
 			SharedPreferences settings = context.getSharedPreferences(BluetoothChat.PREFS_NAME, Context.MODE_PRIVATE);
             String lastBluetoothDeviceAddress = settings.getString(BluetoothChat.PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
@@ -73,12 +73,12 @@ public class AlarmReceiver extends BroadcastReceiver
 	private void turnAlarmOff(Context context) {
 		
 		BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
-		BluetoothChatService service = app.getBluetoothChatService();
+		BluetoothService service = app.getBluetoothChatService();
 		
 		mActiveAlarmContext = null;
 		
 		final int state = service.getState();
-		if (state == BluetoothChatService.STATE_CONNECTED) {
+		if (state == BluetoothService.STATE_CONNECTED) {
 			
 			sendAlarmOffCmd(context);
 		}
@@ -101,7 +101,7 @@ public class AlarmReceiver extends BroadcastReceiver
 			public void run() {
 				
 				BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
-				BluetoothChatService service = app.getBluetoothChatService();
+				BluetoothService service = app.getBluetoothChatService();
 			
 				for (int i = 0; i < messages.length; i++) {
 					
@@ -119,35 +119,35 @@ public class AlarmReceiver extends BroadcastReceiver
 		}.start();
 	}
 	
-	// The Handler that gets information back from the BluetoothChatService
+	// The Handler that gets information back from the BluetoothService
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-            case BluetoothChatService.MESSAGE_STATE_CHANGE:
+            case BluetoothService.MESSAGE_STATE_CHANGE:
                 switch (msg.arg1) {
-                case BluetoothChatService.STATE_CONNECTED:
+                case BluetoothService.STATE_CONNECTED:
                     
                 	if (mActiveAlarmContext != null) {
                 		sendAlarmOnCmd(mActiveAlarmContext);
                 	}
                     break;
-//                case BluetoothChatService.STATE_CONNECTING:
-//                case BluetoothChatService.STATE_LISTEN:
-//                case BluetoothChatService.STATE_NONE:
+//                case BluetoothService.STATE_CONNECTING:
+//                case BluetoothService.STATE_LISTEN:
+//                case BluetoothService.STATE_NONE:
                 }
                 break;
-//            case BluetoothChatService.MESSAGE_WRITE:
+//            case BluetoothService.MESSAGE_WRITE:
 //                break;
-//            case BluetoothChatService.MESSAGE_READ:
+//            case BluetoothService.MESSAGE_READ:
 //                break;
-//            case BluetoothChatService.MESSAGE_DEVICE_NAME:
-//                break;
-            // TODO Retry?
-//            case BluetoothChatService.MESSAGE_CONNECTION_FAILED:
+//            case BluetoothService.MESSAGE_DEVICE_NAME:
 //                break;
             // TODO Retry?
-//            case BluetoothChatService.MESSAGE_CONNECTION_LOST:
+//            case BluetoothService.MESSAGE_CONNECTION_FAILED:
+//                break;
+            // TODO Retry?
+//            case BluetoothService.MESSAGE_CONNECTION_LOST:
 //                break;
             }
         }

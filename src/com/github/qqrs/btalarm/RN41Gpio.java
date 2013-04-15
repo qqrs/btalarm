@@ -22,7 +22,7 @@ public class RN41Gpio {
     private static final String MSG_OFF = "S&,0800\n";
     private static final String MSG_STATUS = "g&\n";
 
-    public static void sendCmd(Context context, BluetoothChatService service, int cmd) {
+    public static void sendCmd(Context context, BluetoothService service, int cmd) {
         String msg = null;
 
         switch (cmd) {
