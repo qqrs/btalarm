@@ -161,7 +161,19 @@ public class BluetoothAlarm extends Activity {
     }
     
     public void onBtnClicked(View btn) {
-    	
+        // TODO: autoconnect? add connect button?
+        int id = btn.getId();
+
+        if (id == R.id.button_debug) {
+            //if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
+            if (false) {
+                Toast.makeText(this, "Bluetooth device not connected.", Toast.LENGTH_SHORT).show();
+            } else {
+                Intent debugIntent = null;
+                debugIntent = new Intent(this, BluetoothDebugActivity.class);
+                startActivity(debugIntent);
+            }
+        }
     }
 
     private void persistLastBluetoothDeviceAddress(String address) {
