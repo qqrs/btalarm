@@ -40,7 +40,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 /**
- * This Activity that displays the Bluetooth Debug commands.
+ * This Activity displays the Bluetooth Debug commands.
  */
 public class BluetoothDebugActivity extends Activity {
     
@@ -51,15 +51,6 @@ public class BluetoothDebugActivity extends Activity {
     // Key names received from the BluetoothService Handler
     public static final String DEVICE_NAME = "device_name";
     public static final String TOAST = "toast";
-
-    // Intent request codes
-    private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
-    private static final int REQUEST_ENABLE_BT = 3;
-
-    // Preferences file name
-    public static final String PREFS_NAME = "btalarm_prefs";
-    public static final String PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS = "lastBluetoothDeviceAddress";
-    private static final String PREFS_KEY_FIRST_APP_RUN = "firstAppRun";
 
     // Layout Views
     private ListView mConversationView;
@@ -75,6 +66,7 @@ public class BluetoothDebugActivity extends Activity {
     // Member object for the chat services
     private BluetoothService mService = null;
     
+    // TODO: remove?
 	private boolean mAreButtonsEnabled;
 
     @Override
@@ -83,23 +75,7 @@ public class BluetoothDebugActivity extends Activity {
         if(D) Log.e(TAG, "+++ ON CREATE +++");
 
         // Set up the window layout
-        setContentView(R.layout.main);
-        
-        // Register the alarm receiver if this is the first time the app runs
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        boolean isFirstTime = prefs.getBoolean(PREFS_KEY_FIRST_APP_RUN, true);
-        if (isFirstTime) {
-        	
-        	AlarmReceiver.register(this);
-        	prefs.edit().putBoolean(PREFS_KEY_FIRST_APP_RUN, false);
-        }
-
-        // If the adapter is null, then Bluetooth is not supported
-        if (BluetoothAdapter.getDefaultAdapter() == null) {
-            Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
+        setContentView(R.layout.debug);
     }
 
     @Override
@@ -107,38 +83,17 @@ public class BluetoothDebugActivity extends Activity {
         super.onStart();
         if(D) Log.e(TAG, "++ ON START ++");
 
-        // If BT is not on, request that it be enabled.
-        // setupChat() will then be called during onActivityResult
-        if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-        // Otherwise, setup the chat session
-        } else {
-            if (mChatService == null) { 
-                setupChat();
-            }
-        }
+        setupDebugActivity();
     }
 
     @Override
     public synchronized void onResume() {
         super.onResume();
         if(D) Log.e(TAG, "+ ON RESUME +");
-
-        // Performing this check in onResume() covers the case in which BT was
-        // not enabled during onStart(), so we were paused to enable it...
-        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-        if (mChatService != null) {
-            // Only if the state is STATE_NONE, do we know that we haven't started already
-            if (mChatService.getState() == BluetoothService.STATE_NONE) {
-              // Start the Bluetooth chat services
-              mChatService.start();
-            }
-        }
     }
 
-    private void setupChat() {
-        Log.d(TAG, "setupChat()");
+    private void setupDebugActivity() {
+        Log.d(TAG, "setupDebugActivity()");
 
         // Initialize the array adapter for the conversation thread
         mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
@@ -168,20 +123,8 @@ public class BluetoothDebugActivity extends Activity {
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
 
+        // TODO: cleanup
         if (mService.getState() != BluetoothService.STATE_CONNECTED) {
-            // attempt to autoconnect to last Bluetooth device
-        	
-        	SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            String lastBluetoothDeviceAddress = settings.getString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
-            if(D) Log.e(TAG, "lastBluetoothDeviceAddress: " + lastBluetoothDeviceAddress);
-            if(lastBluetoothDeviceAddress != null) {
-                mService.connect(this);
-                
-            } else {
-                // No saved Bluetooth device -- show the device list
-                Intent intent = new Intent(this, DeviceListActivity.class);
-                startActivityForResult(intent, REQUEST_CONNECT_DEVICE_INSECURE);
-            }
         } else {
 			mAreButtonsEnabled = true;
 		}
@@ -216,15 +159,8 @@ public class BluetoothDebugActivity extends Activity {
                 RN41Gpio.sendCmd(this, mService, command);
             }
         } else {
-			Toast.makeText(this, "Buttons are disabled!", Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, "Bluetooth device not connected", Toast.LENGTH_SHORT).show();
 		}
-    }
-
-    private void persistLastBluetoothDeviceAddress(String address) {
-      SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-      SharedPreferences.Editor editor = settings.edit();
-      editor.putString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, address);
-      editor.commit();
     }
 
     @Override
@@ -338,6 +274,7 @@ public class BluetoothDebugActivity extends Activity {
                 byte[] readBuf = (byte[]) msg.obj;
                 // construct a string from the valid bytes in the buffer
                 String readMessage = new String(readBuf, 0, msg.arg1);
+                // TODO: make sure to set mConnectedDeviceName
                 mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
                 break;
             case BluetoothService.MESSAGE_DEVICE_NAME:
@@ -359,59 +296,5 @@ public class BluetoothDebugActivity extends Activity {
             }
         }
     };
-
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(D) Log.d(TAG, "onActivityResult " + resultCode);
-        switch (requestCode) {
-        case REQUEST_CONNECT_DEVICE_INSECURE:
-            // When DeviceListActivity returns with a device to connect
-            if (resultCode == Activity.RESULT_OK) {
-                connectDevice(data);
-            }
-            break;
-        case REQUEST_ENABLE_BT:
-            // When the request to enable Bluetooth returns
-            if (resultCode == Activity.RESULT_OK) {
-                // Bluetooth is now enabled, so set up a chat session
-                setupChat();
-            } else {
-                // User did not enable Bluetooth or an error occurred
-                Log.d(TAG, "BT not enabled");
-                Toast.makeText(this, R.string.bt_not_enabled_leaving, Toast.LENGTH_SHORT).show();
-                finish();
-            }
-        }
-    }
-
-    private void connectDevice(Intent data) {
-        // Get the device MAC address
-        String address = data.getExtras()
-            .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
-
-        // Store and persist address as last Bluetooth device
-        persistLastBluetoothDeviceAddress(address);
-
-        mChatService.connect(this);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.option_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        Intent serverIntent = null;
-        switch (item.getItemId()) {
-        case R.id.insecure_connect_scan:
-            // Launch the DeviceListActivity to see devices and do scan
-            serverIntent = new Intent(this, DeviceListActivity.class);
-            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
-            return true;
-        }
-        return false;
-    }
 
 }
