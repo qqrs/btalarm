@@ -17,7 +17,7 @@ public class BtAlarmApplication extends Application {
 		return mReceiver;
 	}
 	
-	public BluetoothService getBluetoothChatService() {
+	public BluetoothService getBluetoothService() {
 		
 		if (mService == null) {
 			mService = new BluetoothService(this);

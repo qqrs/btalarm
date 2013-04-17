@@ -74,7 +74,7 @@ public class BluetoothService {
 
 
     /**
-     * Constructor. Prepares a new BluetoothChat session.
+     * Constructor. Prepares a new BluetoothAlarm session.
      * @param context  The UI Activity Context
      * @param handler  A Handler to send messages back to the UI Activity
      */
@@ -98,8 +98,8 @@ public class BluetoothService {
 	}
     
     public void connect(Context context) {
-    	SharedPreferences prefs = context.getSharedPreferences(BluetoothChat.PREFS_NAME, BluetoothChat.MODE_PRIVATE);
-        String lastBluetoothDeviceAddress = prefs.getString(BluetoothChat.PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
+    	SharedPreferences prefs = context.getSharedPreferences(BluetoothAlarm.PREFS_NAME, BluetoothAlarm.MODE_PRIVATE);
+        String lastBluetoothDeviceAddress = prefs.getString(BluetoothAlarm.PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
         
         // Get the BluetoothDevice object
         BluetoothDevice device = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(lastBluetoothDeviceAddress);
@@ -187,7 +187,7 @@ public class BluetoothService {
         	
 	        Message msg = handler.obtainMessage(MESSAGE_DEVICE_NAME);
 	        Bundle bundle = new Bundle();
-	        bundle.putString(BluetoothChat.DEVICE_NAME, device.getName());
+	        bundle.putString(BluetoothAlarm.DEVICE_NAME, device.getName());
 	        msg.setData(bundle);
 	        handler.sendMessage(msg);
         }

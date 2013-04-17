@@ -11,19 +11,24 @@ import android.util.Log;
 
 public class AlarmReceiver extends BroadcastReceiver
 {
-
 	private static final String TAG = "AlarmReceiver";
 	
 	private Context mActiveAlarmContext = null;
+	
+    // Alarm events
+	public static final String ALARM_ALERT_ACTION = "com.android.deskclock.ALARM_ALERT";
+	public static final String ALARM_SNOOZE_ACTION = "com.android.deskclock.ALARM_SNOOZE";
+	public static final String ALARM_DISMISS_ACTION = "com.android.deskclock.ALARM_DISMISS";
+	public static final String ALARM_DONE_ACTION = "com.android.deskclock.ALARM_DONE";
 	
 	public static void register(Context context)
 	{
 		// This is a boot or the first time the user opens the app.
 		// We need to start listening for the alarms
-		IntentFilter filter = new IntentFilter(BluetoothChat.ALARM_ALERT_ACTION);
-		filter.addAction(BluetoothChat.ALARM_DISMISS_ACTION);
-		filter.addAction(BluetoothChat.ALARM_SNOOZE_ACTION);
-		filter.addAction(BluetoothChat.ALARM_DONE_ACTION);
+		IntentFilter filter = new IntentFilter(ALARM_ALERT_ACTION);
+		filter.addAction(ALARM_DISMISS_ACTION);
+		filter.addAction(ALARM_SNOOZE_ACTION);
+		filter.addAction(ALARM_DONE_ACTION);
 
 		BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
 
@@ -36,12 +41,12 @@ public class AlarmReceiver extends BroadcastReceiver
 		String action = intent.getAction();
 		Log.d(TAG, "received action: " + action);
 
-		if (action.equals(BluetoothChat.ALARM_ALERT_ACTION))
+		if (action.equals(ALARM_ALERT_ACTION))
 		{
 			turnAlarmOn(context);
 		}
 
-		if (action.equals(BluetoothChat.ALARM_DISMISS_ACTION) || action.equals(BluetoothChat.ALARM_SNOOZE_ACTION) || action.equals(BluetoothChat.ALARM_DONE_ACTION))
+		if (action.equals(ALARM_DISMISS_ACTION) || action.equals(ALARM_SNOOZE_ACTION) || action.equals(ALARM_DONE_ACTION))
 		{
 			turnAlarmOff(context);
 		}
@@ -50,15 +55,15 @@ public class AlarmReceiver extends BroadcastReceiver
 	private void turnAlarmOn(Context context) {
 		
 		BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
-		BluetoothService service = app.getBluetoothChatService();
+		BluetoothService service = app.getBluetoothService();
 		
 		mActiveAlarmContext = context;
 		
 		final int state = service.getState();
 		if (state != BluetoothService.STATE_CONNECTED && state != BluetoothService.STATE_CONNECTING) {
 			
-			SharedPreferences settings = context.getSharedPreferences(BluetoothChat.PREFS_NAME, Context.MODE_PRIVATE);
-            String lastBluetoothDeviceAddress = settings.getString(BluetoothChat.PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
+			SharedPreferences settings = context.getSharedPreferences(BluetoothAlarm.PREFS_NAME, Context.MODE_PRIVATE);
+            String lastBluetoothDeviceAddress = settings.getString(BluetoothAlarm.PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
             
             if(lastBluetoothDeviceAddress != null) {
             	service.addHandler(mHandler);
@@ -73,7 +78,7 @@ public class AlarmReceiver extends BroadcastReceiver
 	private void turnAlarmOff(Context context) {
 		
 		BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
-		BluetoothService service = app.getBluetoothChatService();
+		BluetoothService service = app.getBluetoothService();
 		
 		mActiveAlarmContext = null;
 		
@@ -101,7 +106,7 @@ public class AlarmReceiver extends BroadcastReceiver
 			public void run() {
 				
 				BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
-				BluetoothService service = app.getBluetoothChatService();
+				BluetoothService service = app.getBluetoothService();
 			
 				for (int i = 0; i < messages.length; i++) {
 					

@@ -35,7 +35,7 @@
             </intent-filter>
         </receiver>
         
-        <activity android:name="com.github.qqrs.btalarm.BluetoothChat"
+        <activity android:name="com.github.qqrs.btalarm.BluetoothAlarm"
                   android:label="@string/app_name"
                   android:configChanges="orientation|keyboardHidden">
             <intent-filter>

@@ -42,10 +42,10 @@ import android.widget.Toast;
 /**
  * This is the main Activity that displays the current chat session.
  */
-public class BluetoothChat extends Activity {
+public class BluetoothAlarm extends Activity {
     
 	// Debugging
-    private static final String TAG = "BluetoothChat";
+    private static final String TAG = "BluetoothAlarm";
     private static final boolean D = true;
 
     // Key names received from the BluetoothService Handler
@@ -55,12 +55,6 @@ public class BluetoothChat extends Activity {
     // Intent request codes
     private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
     private static final int REQUEST_ENABLE_BT = 3;
-
-    // Alarm events
-	public static final String ALARM_ALERT_ACTION = "com.android.deskclock.ALARM_ALERT";
-	public static final String ALARM_SNOOZE_ACTION = "com.android.deskclock.ALARM_SNOOZE";
-	public static final String ALARM_DISMISS_ACTION = "com.android.deskclock.ALARM_DISMISS";
-	public static final String ALARM_DONE_ACTION = "com.android.deskclock.ALARM_DONE";
 
     // Preferences file name
     public static final String PREFS_NAME = "btalarm_prefs";
@@ -168,7 +162,7 @@ public class BluetoothChat extends Activity {
 
         // Initialize the BluetoothService to perform bluetooth connections
         BtAlarmApplication app = (BtAlarmApplication) getApplication();
-        mChatService = app.getBluetoothChatService();
+        mChatService = app.getBluetoothService();
         mChatService.addHandler(mHandler);
 
         // Initialize the buffer for outgoing messages
