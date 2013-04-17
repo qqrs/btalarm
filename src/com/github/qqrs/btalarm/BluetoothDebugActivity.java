@@ -40,12 +40,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 /**
- * This is the main Activity that displays the Bluetooth Alarm configuration options.
+ * This Activity that displays the Bluetooth Debug commands.
  */
-public class BluetoothAlarm extends Activity {
+public class BluetoothDebugActivity extends Activity {
     
 	// Debugging
-    private static final String TAG = "BluetoothAlarm";
+    private static final String TAG = "BluetoothDebugActivity";
     private static final boolean D = true;
 
     // Key names received from the BluetoothService Handler

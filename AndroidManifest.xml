@@ -47,6 +47,9 @@
                   android:label="@string/select_device"
                   android:theme="@android:style/Theme.Holo.Dialog"
                   android:configChanges="orientation|keyboardHidden" />
+        <activity android:name="com.github.qqrs.btalarm.BluetoothDebugActivity"
+                  android:label="Bluetooth Debug"
+                  android:configChanges="orientation|keyboardHidden" />
         <service android:name="com.github.qqrs.btalarm.AlarmRegisterService" />
     </application>
 </manifest>
