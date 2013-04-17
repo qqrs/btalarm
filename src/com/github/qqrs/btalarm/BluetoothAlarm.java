@@ -75,8 +75,6 @@ public class BluetoothAlarm extends Activity {
     // Member object for the chat services
     private BluetoothService mChatService = null;
     
-	private boolean mAreButtonsEnabled;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,14 +106,14 @@ public class BluetoothAlarm extends Activity {
         if(D) Log.e(TAG, "++ ON START ++");
 
         // If BT is not on, request that it be enabled.
-        // setupChat() will then be called during onActivityResult
+        // setupBtAlarm() will then be called during onActivityResult
         if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
         // Otherwise, setup the chat session
         } else {
             if (mChatService == null) { 
-                setupChat();
+                setupBtAlarm();
             }
         }
     }
@@ -137,36 +135,13 @@ public class BluetoothAlarm extends Activity {
         }
     }
 
-    private void setupChat() {
-        Log.d(TAG, "setupChat()");
-
-        // Initialize the array adapter for the conversation thread
-        mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
-        mConversationView = (ListView) findViewById(R.id.in);
-        mConversationView.setAdapter(mConversationArrayAdapter);
-
-        // Initialize the compose field with a listener for the return key
-        mOutEditText = (EditText) findViewById(R.id.edit_text_out);
-        mOutEditText.setOnEditorActionListener(mWriteListener);
-
-        // Initialize the send button with a listener that for click events
-        mSendButton = (Button) findViewById(R.id.button_send);
-        mSendButton.setOnClickListener(new OnClickListener() {
-            public void onClick(View v) {
-                // Send a message using content of the edit text widget
-                TextView view = (TextView) findViewById(R.id.edit_text_out);
-                String message = view.getText().toString();
-                sendMessage(message);
-            }
-        });
+    private void setupBtAlarm() {
+        Log.d(TAG, "setupBtAlarm()");
 
         // Initialize the BluetoothService to perform bluetooth connections
         BtAlarmApplication app = (BtAlarmApplication) getApplication();
         mChatService = app.getBluetoothService();
         mChatService.addHandler(mHandler);
-
-        // Initialize the buffer for outgoing messages
-        mOutStringBuffer = new StringBuffer("");
 
         if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
             // attempt to autoconnect to last Bluetooth device
@@ -182,42 +157,11 @@ public class BluetoothAlarm extends Activity {
                 Intent intent = new Intent(this, DeviceListActivity.class);
                 startActivityForResult(intent, REQUEST_CONNECT_DEVICE_INSECURE);
             }
-        } else {
-			mAreButtonsEnabled = true;
-		}
+        } 
     }
     
     public void onBtnClicked(View btn) {
     	
-    	if (mAreButtonsEnabled) {
-    	
-	    	int id = btn.getId();
-	    	int command = -1;
-	    	
-	    	switch (id) {
-	    	case R.id.button_cmd:
-	    		command = RN41Gpio.CMD_BEGIN;
-	    		break;
-	    	case R.id.button_end:
-	    		command = RN41Gpio.CMD_END;
-	    		break;
-	    	case R.id.button_on:
-	    		command = RN41Gpio.CMD_ON;
-	    		break;
-	    	case R.id.button_off:
-	    		command = RN41Gpio.CMD_OFF;
-	    		break;
-	    	case R.id.button_status:
-	    		command = RN41Gpio.CMD_STATUS;
-	    		break;
-			}
-	    	
-            if (command != -1) {
-                RN41Gpio.sendCmd(this, mChatService, command);
-            }
-        } else {
-			Toast.makeText(this, "Buttons are disabled!", Toast.LENGTH_SHORT).show();
-		}
     }
 
     private void persistLastBluetoothDeviceAddress(String address) {
@@ -238,7 +182,6 @@ public class BluetoothAlarm extends Activity {
         super.onStop();
         if(D) Log.e(TAG, "-- ON STOP --");
         
-        mAreButtonsEnabled = false;
         mChatService.removeHandler(mHandler);
         mChatService = null;
     }
@@ -257,43 +200,6 @@ public class BluetoothAlarm extends Activity {
         }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
     }
-
-    /**
-     * Sends a message.
-     * @param message  A string of text to send.
-     */
-    private void sendMessage(String message) {
-        // Check that we're actually connected before trying anything
-        if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
-            Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Check that there's actually something to send
-        if (message.length() > 0) {
-            // Get the message bytes and tell the BluetoothService to write
-            byte[] send = message.getBytes();
-            mChatService.write(send);
-
-            // Reset out string buffer to zero and clear the edit text field
-            mOutStringBuffer.setLength(0);
-            mOutEditText.setText(mOutStringBuffer);
-        }
-    }
-
-    // The action listener for the EditText widget, to listen for the return key
-    private TextView.OnEditorActionListener mWriteListener =
-        new TextView.OnEditorActionListener() {
-        public boolean onEditorAction(TextView view, int actionId, KeyEvent event) {
-            // If the action is a key-up event on the return key, send the message
-            if (actionId == EditorInfo.IME_NULL && event.getAction() == KeyEvent.ACTION_UP) {
-                String message = view.getText().toString();
-                sendMessage(message);
-            }
-            if(D) Log.i(TAG, "END onEditorAction");
-            return true;
-        }
-    };
 
     private final void setStatus(int resId) {
         final ActionBar actionBar = getActionBar();
@@ -315,9 +221,6 @@ public class BluetoothAlarm extends Activity {
                 switch (msg.arg1) {
                 case BluetoothService.STATE_CONNECTED:
                     setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
-                    mConversationArrayAdapter.clear();
-
-                    mAreButtonsEnabled = true;
                     break;
                 case BluetoothService.STATE_CONNECTING:
                     setStatus(R.string.title_connecting);
@@ -329,16 +232,8 @@ public class BluetoothAlarm extends Activity {
                 }
                 break;
             case BluetoothService.MESSAGE_WRITE:
-                byte[] writeBuf = (byte[]) msg.obj;
-                // construct a string from the buffer
-                String writeMessage = new String(writeBuf);
-                mConversationArrayAdapter.add("Me:  " + writeMessage);
                 break;
             case BluetoothService.MESSAGE_READ:
-                byte[] readBuf = (byte[]) msg.obj;
-                // construct a string from the valid bytes in the buffer
-                String readMessage = new String(readBuf, 0, msg.arg1);
-                mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
                 break;
             case BluetoothService.MESSAGE_DEVICE_NAME:
                 // save the connected device's name
@@ -349,12 +244,10 @@ public class BluetoothAlarm extends Activity {
             case BluetoothService.MESSAGE_CONNECTION_FAILED:
                 Toast.makeText(getApplicationContext(), "Unable to connect device",
                 				Toast.LENGTH_SHORT).show();
-                mAreButtonsEnabled = false;
                 break;
             case BluetoothService.MESSAGE_CONNECTION_LOST:
                 Toast.makeText(getApplicationContext(), "Device connection was lost",
                 				Toast.LENGTH_SHORT).show();
-                mAreButtonsEnabled = false;
                 break;
             }
         }
@@ -373,7 +266,7 @@ public class BluetoothAlarm extends Activity {
             // When the request to enable Bluetooth returns
             if (resultCode == Activity.RESULT_OK) {
                 // Bluetooth is now enabled, so set up a chat session
-                setupChat();
+                setupBtAlarm();
             } else {
                 // User did not enable Bluetooth or an error occurred
                 Log.d(TAG, "BT not enabled");
