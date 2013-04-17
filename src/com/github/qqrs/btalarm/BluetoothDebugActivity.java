@@ -73,7 +73,7 @@ public class BluetoothDebugActivity extends Activity {
     // String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
     // Member object for the chat services
-    private BluetoothService mChatService = null;
+    private BluetoothService mService = null;
     
 	private boolean mAreButtonsEnabled;
 
@@ -162,20 +162,20 @@ public class BluetoothDebugActivity extends Activity {
 
         // Initialize the BluetoothService to perform bluetooth connections
         BtAlarmApplication app = (BtAlarmApplication) getApplication();
-        mChatService = app.getBluetoothService();
-        mChatService.addHandler(mHandler);
+        mService = app.getBluetoothService();
+        mService.addHandler(mHandler);
 
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
 
-        if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
+        if (mService.getState() != BluetoothService.STATE_CONNECTED) {
             // attempt to autoconnect to last Bluetooth device
         	
         	SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             String lastBluetoothDeviceAddress = settings.getString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
             if(D) Log.e(TAG, "lastBluetoothDeviceAddress: " + lastBluetoothDeviceAddress);
             if(lastBluetoothDeviceAddress != null) {
-                mChatService.connect(this);
+                mService.connect(this);
                 
             } else {
                 // No saved Bluetooth device -- show the device list
@@ -213,7 +213,7 @@ public class BluetoothDebugActivity extends Activity {
 			}
 	    	
             if (command != -1) {
-                RN41Gpio.sendCmd(this, mChatService, command);
+                RN41Gpio.sendCmd(this, mService, command);
             }
         } else {
 			Toast.makeText(this, "Buttons are disabled!", Toast.LENGTH_SHORT).show();
@@ -239,8 +239,8 @@ public class BluetoothDebugActivity extends Activity {
         if(D) Log.e(TAG, "-- ON STOP --");
         
         mAreButtonsEnabled = false;
-        mChatService.removeHandler(mHandler);
-        mChatService = null;
+        mService.removeHandler(mHandler);
+        mService = null;
     }
 
     @Override
@@ -248,12 +248,12 @@ public class BluetoothDebugActivity extends Activity {
         super.onDestroy();
         // Stop the Bluetooth chat services
 
-        if (mChatService != null) {
+        if (mService != null) {
             // TODO: is this needed? will msg go out before service is stopped?
             // Exit command mode on RN-41 module
-        	RN41Gpio.sendCmd(this, mChatService, RN41Gpio.CMD_END);
+        	RN41Gpio.sendCmd(this, mService, RN41Gpio.CMD_END);
 
-            mChatService.stop();
+            mService.stop();
         }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
     }
@@ -264,7 +264,7 @@ public class BluetoothDebugActivity extends Activity {
      */
     private void sendMessage(String message) {
         // Check that we're actually connected before trying anything
-        if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
+        if (mService.getState() != BluetoothService.STATE_CONNECTED) {
             Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
             return;
         }
@@ -273,7 +273,7 @@ public class BluetoothDebugActivity extends Activity {
         if (message.length() > 0) {
             // Get the message bytes and tell the BluetoothService to write
             byte[] send = message.getBytes();
-            mChatService.write(send);
+            mService.write(send);
 
             // Reset out string buffer to zero and clear the edit text field
             mOutStringBuffer.setLength(0);

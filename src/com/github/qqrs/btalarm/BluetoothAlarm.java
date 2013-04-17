@@ -72,8 +72,8 @@ public class BluetoothAlarm extends Activity {
     private ArrayAdapter<String> mConversationArrayAdapter;
     // String buffer for outgoing messages
     private StringBuffer mOutStringBuffer;
-    // Member object for the chat services
-    private BluetoothService mChatService = null;
+    // Member object for the services
+    private BluetoothService mService = null;
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -110,9 +110,9 @@ public class BluetoothAlarm extends Activity {
         if (!BluetoothAdapter.getDefaultAdapter().isEnabled()) {
             Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-        // Otherwise, setup the chat session
+        // Otherwise, setup the session
         } else {
-            if (mChatService == null) { 
+            if (mService == null) { 
                 setupBtAlarm();
             }
         }
@@ -126,11 +126,11 @@ public class BluetoothAlarm extends Activity {
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
         // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-        if (mChatService != null) {
+        if (mService != null) {
             // Only if the state is STATE_NONE, do we know that we haven't started already
-            if (mChatService.getState() == BluetoothService.STATE_NONE) {
-              // Start the Bluetooth chat services
-              mChatService.start();
+            if (mService.getState() == BluetoothService.STATE_NONE) {
+              // Start the Bluetooth services
+              mService.start();
             }
         }
     }
@@ -140,17 +140,17 @@ public class BluetoothAlarm extends Activity {
 
         // Initialize the BluetoothService to perform bluetooth connections
         BtAlarmApplication app = (BtAlarmApplication) getApplication();
-        mChatService = app.getBluetoothService();
-        mChatService.addHandler(mHandler);
+        mService = app.getBluetoothService();
+        mService.addHandler(mHandler);
 
-        if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
+        if (mService.getState() != BluetoothService.STATE_CONNECTED) {
             // attempt to autoconnect to last Bluetooth device
         	
         	SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             String lastBluetoothDeviceAddress = settings.getString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
             if(D) Log.e(TAG, "lastBluetoothDeviceAddress: " + lastBluetoothDeviceAddress);
             if(lastBluetoothDeviceAddress != null) {
-                mChatService.connect(this);
+                mService.connect(this);
                 
             } else {
                 // No saved Bluetooth device -- show the device list
@@ -165,7 +165,8 @@ public class BluetoothAlarm extends Activity {
         int id = btn.getId();
 
         if (id == R.id.button_debug) {
-            //if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
+            //TODO
+            //if (mService.getState() != BluetoothService.STATE_CONNECTED) {
             if (false) {
                 Toast.makeText(this, "Bluetooth device not connected.", Toast.LENGTH_SHORT).show();
             } else {
@@ -194,21 +195,21 @@ public class BluetoothAlarm extends Activity {
         super.onStop();
         if(D) Log.e(TAG, "-- ON STOP --");
         
-        mChatService.removeHandler(mHandler);
-        mChatService = null;
+        mService.removeHandler(mHandler);
+        mService = null;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Stop the Bluetooth chat services
+        // Stop the Bluetooth services
 
-        if (mChatService != null) {
+        if (mService != null) {
             // TODO: is this needed? will msg go out before service is stopped?
             // Exit command mode on RN-41 module
-        	RN41Gpio.sendCmd(this, mChatService, RN41Gpio.CMD_END);
+        	RN41Gpio.sendCmd(this, mService, RN41Gpio.CMD_END);
 
-            mChatService.stop();
+            mService.stop();
         }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
     }
@@ -277,7 +278,7 @@ public class BluetoothAlarm extends Activity {
         case REQUEST_ENABLE_BT:
             // When the request to enable Bluetooth returns
             if (resultCode == Activity.RESULT_OK) {
-                // Bluetooth is now enabled, so set up a chat session
+                // Bluetooth is now enabled, so set up a session
                 setupBtAlarm();
             } else {
                 // User did not enable Bluetooth or an error occurred
@@ -296,7 +297,7 @@ public class BluetoothAlarm extends Activity {
         // Store and persist address as last Bluetooth device
         persistLastBluetoothDeviceAddress(address);
 
-        mChatService.connect(this);
+        mService.connect(this);
     }
 
     @Override
