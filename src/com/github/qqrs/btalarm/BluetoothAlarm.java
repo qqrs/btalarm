@@ -88,6 +88,7 @@ public class BluetoothAlarm extends Activity {
         boolean isFirstTime = prefs.getBoolean(PREFS_KEY_FIRST_APP_RUN, true);
         if (isFirstTime) {
         	
+            // TODO: need to unregisterReceiver somewhere?
         	AlarmReceiver.register(this);
         	prefs.edit().putBoolean(PREFS_KEY_FIRST_APP_RUN, false);
         }

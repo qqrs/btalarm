@@ -27,14 +27,12 @@ public class RN41Gpio {
 
         switch (cmd) {
         case CMD_BEGIN:
-            // TODO: check before sending
             msg = MSG_BEGIN;
             break;
         case CMD_END:
             msg = MSG_END;
             break;
         case CMD_ON:
-            // TODO: check before sending
             msg = MSG_ON;
             break;
         case CMD_OFF:

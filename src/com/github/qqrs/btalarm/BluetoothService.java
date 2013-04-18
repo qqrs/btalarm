@@ -60,7 +60,7 @@ public class BluetoothService {
     private static final String TAG = "BluetoothService";
 
     private static final boolean D = true;
-    // Unique UUID for this application
+    // UUID for Bluetooth Serial Port Profile (SPP)
     private static final UUID MY_UUID_INSECURE =
     	UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
