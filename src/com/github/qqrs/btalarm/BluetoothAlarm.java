@@ -240,9 +240,10 @@ public class BluetoothAlarm extends Activity {
 
         boolean checked = ((Switch) view).isChecked();
 
-        // TODO: stop/start services
-        if (checked) {
-        } else {
+        if (!checked) {
+            if (mService != null) {
+                mService.stop();
+            }
         }
 
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
@@ -272,9 +273,6 @@ public class BluetoothAlarm extends Activity {
         // Stop the Bluetooth services
 
         if (mService != null) {
-            // TODO: is this needed? will msg go out before service is stopped?
-            // Exit command mode on RN-41 module
-        	RN41Gpio.sendCmd(this, mService, RN41Gpio.CMD_END);
             mService.stop();
         }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
