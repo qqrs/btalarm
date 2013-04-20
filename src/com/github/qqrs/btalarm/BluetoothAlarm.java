@@ -25,17 +25,9 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.inputmethod.EditorInfo;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
+import android.widget.RadioButton;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -59,19 +51,18 @@ public class BluetoothAlarm extends Activity {
     // Preferences file name
     public static final String PREFS_NAME = "btalarm_prefs";
     public static final String PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS = "lastBluetoothDeviceAddress";
+    public static final String PREFS_KEY_LAST_BLUETOOTH_DEVICE_INFO = "lastBluetoothDeviceInfo";
+    public static final String PREFS_KEY_BTALARM_ENABLED = "btalarmEnabled";
+    public static final String PREFS_KEY_RING_STYLE = "ringStyle";
     private static final String PREFS_KEY_FIRST_APP_RUN = "firstAppRun";
 
-    // Layout Views
-    private ListView mConversationView;
-    private EditText mOutEditText;
-    private Button mSendButton;
+    // Ring style values
+    public static final int RING_STYLE_CONTINUOUS = 0;
+    public static final int RING_STYLE_SINGLE_RING = 1;
+    public static final int RING_STYLE_REPEATED_RING = 2;
 
     // Name of the connected device
     private String mConnectedDeviceName = null;
-    // Array adapter for the conversation thread
-    private ArrayAdapter<String> mConversationArrayAdapter;
-    // String buffer for outgoing messages
-    private StringBuffer mOutStringBuffer;
     // Member object for the services
     private BluetoothService mService = null;
     
@@ -87,10 +78,44 @@ public class BluetoothAlarm extends Activity {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         boolean isFirstTime = prefs.getBoolean(PREFS_KEY_FIRST_APP_RUN, true);
         if (isFirstTime) {
-        	
             // TODO: need to unregisterReceiver somewhere?
         	AlarmReceiver.register(this);
-        	prefs.edit().putBoolean(PREFS_KEY_FIRST_APP_RUN, false);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putBoolean(PREFS_KEY_FIRST_APP_RUN, false);
+        	editor.putBoolean(PREFS_KEY_BTALARM_ENABLED, true);
+        	editor.putInt(PREFS_KEY_RING_STYLE, RING_STYLE_CONTINUOUS);
+            editor.commit();
+        }
+
+        Switch sw = (Switch)findViewById(R.id.switch_enabled);
+        sw.setChecked(prefs.getBoolean(PREFS_KEY_BTALARM_ENABLED, true));
+
+        int ringStyle = prefs.getInt(PREFS_KEY_RING_STYLE, RING_STYLE_CONTINUOUS);
+        int activeRadioId;
+        switch(ringStyle) {
+            case RING_STYLE_CONTINUOUS:
+                activeRadioId = R.id.radio_ring_continuous;
+                break;
+            case RING_STYLE_SINGLE_RING:
+                activeRadioId = R.id.radio_ring_single;
+                break;
+            case RING_STYLE_REPEATED_RING:
+                activeRadioId = R.id.radio_ring_repeated;
+                break;
+            default:
+                activeRadioId = R.id.radio_ring_continuous;
+                return;
+        }
+        RadioButton active_radio = (RadioButton)findViewById(activeRadioId);
+        active_radio.setChecked(true);
+
+        // TODO: populate Bluetooth device name
+        TextView textBtName = (TextView)findViewById(R.id.text_btname);
+        String btInfo = prefs.getString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_INFO, null);
+        if (btInfo == null) {
+            textBtName.setText("no device selected");
+        } else {
+            textBtName.setText(btInfo);
         }
 
         // If the adapter is null, then Bluetooth is not supported
@@ -151,8 +176,8 @@ public class BluetoothAlarm extends Activity {
             String lastBluetoothDeviceAddress = settings.getString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
             if(D) Log.e(TAG, "lastBluetoothDeviceAddress: " + lastBluetoothDeviceAddress);
             if(lastBluetoothDeviceAddress != null) {
+                // TODO: don't connect here? only in debug handler and AlarmReceiver?
                 mService.connect(this);
-                
             } else {
                 // No saved Bluetooth device -- show the device list
                 Intent intent = new Intent(this, DeviceListActivity.class);
@@ -165,24 +190,80 @@ public class BluetoothAlarm extends Activity {
         // TODO: autoconnect? add connect button?
         int id = btn.getId();
 
-        if (id == R.id.button_debug) {
+        switch (id) {
+        case R.id.button_debug: 
             //TODO
             //if (mService.getState() != BluetoothService.STATE_CONNECTED) {
             if (false) {
                 Toast.makeText(this, "Bluetooth device not connected.", Toast.LENGTH_SHORT).show();
+                //if(lastBluetoothDeviceAddress != null) {
+                    //mService.connect(this);
+                //}
             } else {
-                Intent debugIntent = null;
-                debugIntent = new Intent(this, BluetoothDebugActivity.class);
-                startActivity(debugIntent);
+                Intent intent = null;
+                intent = new Intent(this, BluetoothDebugActivity.class);
+                startActivity(intent);
             }
+            break;
+        case R.id.button_scan:
+            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+            if (prefs.getBoolean(PREFS_KEY_BTALARM_ENABLED, true)) {
+                Intent intent = null;
+                intent = new Intent(this, DeviceListActivity.class);
+                startActivityForResult(intent, REQUEST_CONNECT_DEVICE_INSECURE);
+            } else {
+                Toast.makeText(this, "Bluetooth Alarm service is disabled. Can't scan for devices.", Toast.LENGTH_SHORT).show();
+            }
+            break;
         }
     }
 
-    private void persistLastBluetoothDeviceAddress(String address) {
-      SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-      SharedPreferences.Editor editor = settings.edit();
-      editor.putString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, address);
-      editor.commit();
+    public void onRadioButtonClicked(View view) {
+        boolean checked = ((RadioButton) view).isChecked();
+
+        if (!checked) {
+            return;
+        }
+
+        int ringStyle;
+        
+        // Check which radio button was clicked
+        switch(view.getId()) {
+            case R.id.radio_ring_continuous:
+                ringStyle = RING_STYLE_CONTINUOUS;
+                break;
+            case R.id.radio_ring_single:
+                ringStyle = RING_STYLE_SINGLE_RING;
+                break;
+            case R.id.radio_ring_repeated:
+                ringStyle = RING_STYLE_REPEATED_RING;
+                break;
+            default:
+                return;
+        }
+
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putInt(PREFS_KEY_RING_STYLE, ringStyle);
+        editor.commit();
+    }
+
+    public void onSwitchClicked(View view) {
+        if (view.getId() != R.id.switch_enabled) {
+            return;
+        }
+
+        boolean checked = ((Switch) view).isChecked();
+
+        // TODO: stop/start services
+        if (checked) {
+        } else {
+        }
+
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putBoolean(PREFS_KEY_BTALARM_ENABLED, checked);
+        editor.commit();
     }
 
     @Override
@@ -291,34 +372,29 @@ public class BluetoothAlarm extends Activity {
     }
 
     private void connectDevice(Intent data) {
-        // Get the device MAC address
+        // Get the device MAC address and device info string
         String address = data.getExtras()
             .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
+        String info = data.getExtras()
+            .getString(DeviceListActivity.EXTRA_DEVICE_INFO);
 
         // Store and persist address as last Bluetooth device
-        persistLastBluetoothDeviceAddress(address);
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        editor.putString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, address);
+        editor.putString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_INFO, info);
+        editor.commit();
 
-        mService.connect(this);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.option_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        Intent serverIntent = null;
-        switch (item.getItemId()) {
-        case R.id.insecure_connect_scan:
-            // Launch the DeviceListActivity to see devices and do scan
-            serverIntent = new Intent(this, DeviceListActivity.class);
-            startActivityForResult(serverIntent, REQUEST_CONNECT_DEVICE_INSECURE);
-            return true;
+        // Update TextView showing selected device
+        TextView textBtName = (TextView)findViewById(R.id.text_btname);
+        if (info == null) {
+            textBtName.setText("no device selected");
+        } else {
+            textBtName.setText(info);
         }
-        return false;
+
+        // TODO: don't connect here? only in debug handler and AlarmReceiver?
+        mService.connect(this);
     }
 
 }

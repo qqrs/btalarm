@@ -69,6 +69,8 @@ public class AlarmReceiver extends BroadcastReceiver
             	service.addHandler(mHandler);
                 service.connect(context);
             }
+
+            // TODO: need to sendAlarmOnCmd after connected?
 		
 		} else {
 			sendAlarmOnCmd(context);
@@ -92,6 +94,19 @@ public class AlarmReceiver extends BroadcastReceiver
 	}
 	
 	private void sendAlarmOnCmd(Context context) {
+        // TODO: read preferences and start appropriate ringer
+        SharedPreferences prefs = context.getSharedPreferences(BluetoothAlarm.PREFS_NAME, Context.MODE_PRIVATE);
+        int ringStyle = prefs.getInt(BluetoothAlarm.PREFS_KEY_RING_STYLE, BluetoothAlarm.RING_STYLE_CONTINUOUS);
+        switch(ringStyle) {
+            case BluetoothAlarm.RING_STYLE_CONTINUOUS:
+                break;
+            case BluetoothAlarm.RING_STYLE_SINGLE_RING:
+                break;
+            case BluetoothAlarm.RING_STYLE_REPEATED_RING:
+                break;
+            default:
+                return;
+        }
 		sendMessagesWithDelay(context, 1000, RN41Gpio.CMD_BEGIN, RN41Gpio.CMD_ON);
 	}
 	
