@@ -41,6 +41,12 @@ public class AlarmReceiver extends BroadcastReceiver
 		String action = intent.getAction();
 		Log.d(TAG, "received action: " + action);
 
+        // Check if alarm is disabled
+        SharedPreferences settings = context.getSharedPreferences(BluetoothAlarm.PREFS_NAME, Context.MODE_PRIVATE);
+        if (!settings.getBoolean(BluetoothAlarm.PREFS_KEY_BTALARM_ENABLED, true)) {
+            return;
+        }
+
 		if (action.equals(ALARM_ALERT_ACTION))
 		{
 			turnAlarmOn(context);
@@ -53,7 +59,6 @@ public class AlarmReceiver extends BroadcastReceiver
 	}
 	
 	private void turnAlarmOn(Context context) {
-		
 		BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
 		BluetoothService service = app.getBluetoothService();
 		
@@ -69,16 +74,12 @@ public class AlarmReceiver extends BroadcastReceiver
             	service.addHandler(mHandler);
                 service.connect(context);
             }
-
-            // TODO: need to sendAlarmOnCmd after connected?
-		
 		} else {
 			sendAlarmOnCmd(context);
 		}
 	}
 	
 	private void turnAlarmOff(Context context) {
-		
 		BtAlarmApplication app = (BtAlarmApplication) context.getApplicationContext();
 		BluetoothService service = app.getBluetoothService();
 		
@@ -86,7 +87,6 @@ public class AlarmReceiver extends BroadcastReceiver
 		
 		final int state = service.getState();
 		if (state == BluetoothService.STATE_CONNECTED) {
-			
 			sendAlarmOffCmd(context);
 		}
 		
