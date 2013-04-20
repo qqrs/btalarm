@@ -114,6 +114,6 @@
         android:layout_height="wrap_content"
         android:layout_weight="0"
         android:onClick="onBtnClicked"
-        android:text="Debug" />
+        android:text="BT Debug Terminal" />
 
 </LinearLayout>
