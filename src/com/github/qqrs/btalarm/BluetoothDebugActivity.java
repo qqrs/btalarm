@@ -60,16 +60,10 @@ public class BluetoothDebugActivity extends Activity {
     // Member object for the chat services
     private BluetoothService mService = null;
     
-    // TODO: remove?
-	private boolean mAreButtonsEnabled;
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(D) Log.e(TAG, "+++ ON CREATE +++");
-
-        // Set up the window layout
-        setContentView(R.layout.debug);
     }
 
     @Override
@@ -77,7 +71,18 @@ public class BluetoothDebugActivity extends Activity {
         super.onStart();
         if(D) Log.e(TAG, "++ ON START ++");
 
-        setupDebugActivity();
+        // Initialize the BluetoothService
+        BtAlarmApplication app = (BtAlarmApplication) getApplication();
+        mService = app.getBluetoothService();
+        mService.addHandler(mHandler);
+
+        if (mService.getState() == BluetoothService.STATE_CONNECTED ) {
+            setupDebugActivity();
+        } else if (mService.getState() == BluetoothService.STATE_CONNECTING) {
+            // wait for service to finish connecting
+        } else {
+            mService.connect(this);
+        }
     }
 
     @Override
@@ -88,6 +93,9 @@ public class BluetoothDebugActivity extends Activity {
 
     private void setupDebugActivity() {
         Log.d(TAG, "setupDebugActivity()");
+
+        // Set up the window layout
+        setContentView(R.layout.debug);
 
         // Initialize the array adapter for the conversation thread
         mConversationArrayAdapter = new ArrayAdapter<String>(this, R.layout.message);
@@ -109,52 +117,40 @@ public class BluetoothDebugActivity extends Activity {
             }
         });
 
-        // Initialize the BluetoothService to perform bluetooth connections
-        BtAlarmApplication app = (BtAlarmApplication) getApplication();
-        mService = app.getBluetoothService();
-        mService.addHandler(mHandler);
-
         // Initialize the buffer for outgoing messages
         mOutStringBuffer = new StringBuffer("");
-
-        // TODO: cleanup
-        if (mService.getState() != BluetoothService.STATE_CONNECTED) {
-        } else {
-			mAreButtonsEnabled = true;
-		}
     }
     
     public void onBtnClicked(View btn) {
-    	
-    	if (mAreButtonsEnabled) {
-    	
-	    	int id = btn.getId();
-	    	int command = -1;
-	    	
-	    	switch (id) {
-	    	case R.id.button_cmd:
-	    		command = RN41Gpio.CMD_BEGIN;
-	    		break;
-	    	case R.id.button_end:
-	    		command = RN41Gpio.CMD_END;
-	    		break;
-	    	case R.id.button_on:
-	    		command = RN41Gpio.CMD_ON;
-	    		break;
-	    	case R.id.button_off:
-	    		command = RN41Gpio.CMD_OFF;
-	    		break;
-	    	case R.id.button_status:
-	    		command = RN41Gpio.CMD_STATUS;
-	    		break;
-			}
-	    	
-            if (command != -1) {
-                RN41Gpio.sendCmd(this, mService, command);
-            }
-        } else {
+        if (mService.getState() != BluetoothService.STATE_CONNECTED) {
 			Toast.makeText(this, "Bluetooth device not connected", Toast.LENGTH_SHORT).show();
-		}
+            return;
+        }
+    	
+        int id = btn.getId();
+        int command;
+        
+        switch (id) {
+        case R.id.button_cmd:
+            command = RN41Gpio.CMD_BEGIN;
+            break;
+        case R.id.button_end:
+            command = RN41Gpio.CMD_END;
+            break;
+        case R.id.button_on:
+            command = RN41Gpio.CMD_ON;
+            break;
+        case R.id.button_off:
+            command = RN41Gpio.CMD_OFF;
+            break;
+        case R.id.button_status:
+            command = RN41Gpio.CMD_STATUS;
+            break;
+        default:
+            return;
+        }
+        
+        RN41Gpio.sendCmd(this, mService, command);
     }
 
     @Override
@@ -168,7 +164,6 @@ public class BluetoothDebugActivity extends Activity {
         super.onStop();
         if(D) Log.e(TAG, "-- ON STOP --");
         
-        mAreButtonsEnabled = false;
         mService.removeHandler(mHandler);
         mService = null;
     }
@@ -244,10 +239,9 @@ public class BluetoothDebugActivity extends Activity {
                 if(D) Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
                 switch (msg.arg1) {
                 case BluetoothService.STATE_CONNECTED:
+                    setupDebugActivity();
                     setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
                     mConversationArrayAdapter.clear();
-
-                    mAreButtonsEnabled = true;
                     break;
                 case BluetoothService.STATE_CONNECTING:
                     setStatus(R.string.title_connecting);
@@ -280,12 +274,14 @@ public class BluetoothDebugActivity extends Activity {
             case BluetoothService.MESSAGE_CONNECTION_FAILED:
                 Toast.makeText(getApplicationContext(), "Unable to connect device",
                 				Toast.LENGTH_SHORT).show();
-                mAreButtonsEnabled = false;
+                // remove this activity and return to main activity
+                finish();
                 break;
             case BluetoothService.MESSAGE_CONNECTION_LOST:
                 Toast.makeText(getApplicationContext(), "Device connection was lost",
                 				Toast.LENGTH_SHORT).show();
-                mAreButtonsEnabled = false;
+                // remove this activity and return to main activity
+                finish();
                 break;
             }
         }

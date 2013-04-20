@@ -101,7 +101,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="onBtnClicked"
-        android:text="Scan for Devices" />
+        android:text="Select Device" />
 
     <Space
         android:layout_width="match_parent"
@@ -114,6 +114,6 @@
         android:layout_height="wrap_content"
         android:layout_weight="0"
         android:onClick="onBtnClicked"
-        android:text="BT Debug Terminal" />
+        android:text="Bluetooth Debug Terminal" />
 
 </LinearLayout>

@@ -170,15 +170,10 @@ public class BluetoothAlarm extends Activity {
         mService.addHandler(mHandler);
 
         if (mService.getState() != BluetoothService.STATE_CONNECTED) {
-            // attempt to autoconnect to last Bluetooth device
-        	
         	SharedPreferences settings = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
             String lastBluetoothDeviceAddress = settings.getString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
             if(D) Log.e(TAG, "lastBluetoothDeviceAddress: " + lastBluetoothDeviceAddress);
-            if(lastBluetoothDeviceAddress != null) {
-                // TODO: don't connect here? only in debug handler and AlarmReceiver?
-                mService.connect(this);
-            } else {
+            if(lastBluetoothDeviceAddress == null) {
                 // No saved Bluetooth device -- show the device list
                 Intent intent = new Intent(this, DeviceListActivity.class);
                 startActivityForResult(intent, REQUEST_CONNECT_DEVICE_INSECURE);
@@ -187,33 +182,23 @@ public class BluetoothAlarm extends Activity {
     }
     
     public void onBtnClicked(View btn) {
-        // TODO: autoconnect? add connect button?
         int id = btn.getId();
+        Intent intent = null;
+        
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+        if (!prefs.getBoolean(PREFS_KEY_BTALARM_ENABLED, true)) {
+            Toast.makeText(this, "Bluetooth Alarm service is disabled.", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         switch (id) {
         case R.id.button_debug: 
-            //TODO
-            //if (mService.getState() != BluetoothService.STATE_CONNECTED) {
-            if (false) {
-                Toast.makeText(this, "Bluetooth device not connected.", Toast.LENGTH_SHORT).show();
-                //if(lastBluetoothDeviceAddress != null) {
-                    //mService.connect(this);
-                //}
-            } else {
-                Intent intent = null;
-                intent = new Intent(this, BluetoothDebugActivity.class);
-                startActivity(intent);
-            }
+            intent = new Intent(this, BluetoothDebugActivity.class);
+            startActivity(intent);
             break;
         case R.id.button_scan:
-            SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-            if (prefs.getBoolean(PREFS_KEY_BTALARM_ENABLED, true)) {
-                Intent intent = null;
-                intent = new Intent(this, DeviceListActivity.class);
-                startActivityForResult(intent, REQUEST_CONNECT_DEVICE_INSECURE);
-            } else {
-                Toast.makeText(this, "Bluetooth Alarm service is disabled. Can't scan for devices.", Toast.LENGTH_SHORT).show();
-            }
+            intent = new Intent(this, DeviceListActivity.class);
+            startActivityForResult(intent, REQUEST_CONNECT_DEVICE_INSECURE);
             break;
         }
     }
@@ -290,7 +275,6 @@ public class BluetoothAlarm extends Activity {
             // TODO: is this needed? will msg go out before service is stopped?
             // Exit command mode on RN-41 module
         	RN41Gpio.sendCmd(this, mService, RN41Gpio.CMD_END);
-
             mService.stop();
         }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
@@ -315,14 +299,11 @@ public class BluetoothAlarm extends Activity {
                 if(D) Log.i(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
                 switch (msg.arg1) {
                 case BluetoothService.STATE_CONNECTED:
-                    setStatus(getString(R.string.title_connected_to, mConnectedDeviceName));
                     break;
                 case BluetoothService.STATE_CONNECTING:
-                    setStatus(R.string.title_connecting);
                     break;
                 case BluetoothService.STATE_LISTEN:
                 case BluetoothService.STATE_NONE:
-                    setStatus(R.string.title_not_connected);
                     break;
                 }
                 break;
@@ -354,7 +335,7 @@ public class BluetoothAlarm extends Activity {
         case REQUEST_CONNECT_DEVICE_INSECURE:
             // When DeviceListActivity returns with a device to connect
             if (resultCode == Activity.RESULT_OK) {
-                connectDevice(data);
+                selectDevice(data);
             }
             break;
         case REQUEST_ENABLE_BT:
@@ -371,7 +352,7 @@ public class BluetoothAlarm extends Activity {
         }
     }
 
-    private void connectDevice(Intent data) {
+    private void selectDevice(Intent data) {
         // Get the device MAC address and device info string
         String address = data.getExtras()
             .getString(DeviceListActivity.EXTRA_DEVICE_ADDRESS);
@@ -392,9 +373,6 @@ public class BluetoothAlarm extends Activity {
         } else {
             textBtName.setText(info);
         }
-
-        // TODO: don't connect here? only in debug handler and AlarmReceiver?
-        mService.connect(this);
     }
 
 }

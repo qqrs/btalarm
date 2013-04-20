@@ -147,7 +147,7 @@ public class AlarmReceiver extends BroadcastReceiver
             case BluetoothService.MESSAGE_STATE_CHANGE:
                 switch (msg.arg1) {
                 case BluetoothService.STATE_CONNECTED:
-                    
+                    // check if alarm is still active before sending commands
                 	if (mActiveAlarmContext != null) {
                 		sendAlarmOnCmd(mActiveAlarmContext);
                 	}
