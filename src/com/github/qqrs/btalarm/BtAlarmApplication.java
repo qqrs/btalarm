@@ -5,9 +5,11 @@ import android.app.Application;
 
 public class BtAlarmApplication extends Application {
 	
+	public Thread alarmThread;
+	
 	private AlarmReceiver mReceiver;
 	private BluetoothService mService;
-	
+		
 	public AlarmReceiver getAlarmReceiver() {
 		
 		if (mReceiver == null) {
@@ -25,5 +27,4 @@ public class BtAlarmApplication extends Application {
 		
 		return mService;
 	}
-
 }

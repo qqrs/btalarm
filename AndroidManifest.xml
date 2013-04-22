@@ -51,5 +51,6 @@
                   android:label="Bluetooth Debug"
                   android:configChanges="orientation|keyboardHidden" />
         <service android:name="com.github.qqrs.btalarm.AlarmRegisterService" />
+        <service android:name="com.github.qqrs.btalarm.AlarmRingerService" />        
     </application>
 </manifest>
