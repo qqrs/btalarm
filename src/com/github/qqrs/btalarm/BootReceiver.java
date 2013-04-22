@@ -12,6 +12,6 @@ public class BootReceiver extends BroadcastReceiver
 	{
 		Log.d("BootReceiver", "Boot received!");
 		Intent startServiceIntent = new Intent(context, AlarmRegisterService.class);
-        context.startService(startServiceIntent);
+		context.startService(startServiceIntent);
 	}
 }

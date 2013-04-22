@@ -174,10 +174,6 @@ public class BluetoothDebugActivity extends Activity {
         // Stop the Bluetooth chat services
 
         if (mService != null) {
-            // TODO: is this needed? will msg go out before service is stopped?
-            // Exit command mode on RN-41 module
-        	RN41Gpio.sendCmd(this, mService, RN41Gpio.CMD_END);
-
             mService.stop();
         }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
