@@ -18,6 +18,7 @@ package com.github.qqrs.btalarm;
 
 import android.app.ActionBar;
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -81,7 +82,15 @@ public class BluetoothDebugActivity extends Activity {
         } else if (mService.getState() == BluetoothService.STATE_CONNECTING) {
             // wait for service to finish connecting
         } else {
-            mService.connect(this);
+            SharedPreferences prefs = app.getSharedPreferences(BluetoothAlarm.PREFS_NAME, BluetoothAlarm.MODE_PRIVATE);
+            String lastBluetoothDeviceAddress = prefs.getString(BluetoothAlarm.PREFS_KEY_LAST_BLUETOOTH_DEVICE_ADDRESS, null);
+
+            if (lastBluetoothDeviceAddress == null) {
+                Toast.makeText(this, "No Bluetooth device selected", Toast.LENGTH_SHORT).show();
+                finish();
+            } else {
+                mService.connect(this);
+            }
         }
     }
 
