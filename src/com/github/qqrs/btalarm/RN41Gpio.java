@@ -16,6 +16,8 @@ public class RN41Gpio {
     public static final int CMD_OFF = 4;
     public static final int CMD_STATUS = 5;
 
+    public static final int CMD_DISCONNECT = 100;
+
     private static final String MSG_BEGIN = "$$$";
     private static final String MSG_END = "---\n";
     private static final String MSG_ON = "S&,0808\n";

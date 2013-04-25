@@ -91,7 +91,7 @@ public class AlarmRingerService extends Service
 	}
 	
 	private void sendAlarmOffCmd() {
-		sendMessagesWithDelay(1000, -1, RN41Gpio.CMD_OFF, RN41Gpio.CMD_END);
+		sendMessagesWithDelay(1000, -1, RN41Gpio.CMD_OFF, RN41Gpio.CMD_END, RN41Gpio.CMD_DISCONNECT);
 	}
 	
 	private void sendMessagesWithDelay(final int delayMs, final int repeatIndex, final int... messages) {
@@ -106,7 +106,11 @@ public class AlarmRingerService extends Service
 						break;
 					}
 					
-					RN41Gpio.sendCmd(app, service, messages[i]);
+                    if (messages[i] == RN41Gpio.CMD_DISCONNECT) {
+                        service.stop();
+                    } else {
+                        RN41Gpio.sendCmd(app, service, messages[i]);
+                    }
 
                     // repeat, starting at command with specified index -- otherwise only run the sequence once
                     if (i == messages.length -1 && repeatIndex >= 0 && repeatIndex < messages.length) {
