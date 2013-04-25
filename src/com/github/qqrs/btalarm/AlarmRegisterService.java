@@ -10,14 +10,13 @@ public class AlarmRegisterService extends Service {
 
 	@Override
 	public IBinder onBind(Intent arg0) {
-
 		return null;
 	}
 	
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		Log.d("AlarmRegisterService", "Service received!");
+		Log.d("AlarmRegisterService", "Service created");
 		AlarmReceiver.register(getApplicationContext());
 	}
 

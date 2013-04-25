@@ -16,7 +16,6 @@
 
 package com.github.qqrs.btalarm;
 
-import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
@@ -78,7 +77,6 @@ public class BluetoothAlarm extends Activity {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         boolean isFirstTime = prefs.getBoolean(PREFS_KEY_FIRST_APP_RUN, true);
         if (isFirstTime) {
-            // TODO: need to unregisterReceiver somewhere?
         	AlarmReceiver.register(this);
             SharedPreferences.Editor editor = prefs.edit();
             editor.putBoolean(PREFS_KEY_FIRST_APP_RUN, false);
@@ -109,7 +107,6 @@ public class BluetoothAlarm extends Activity {
         RadioButton active_radio = (RadioButton)findViewById(activeRadioId);
         active_radio.setChecked(true);
 
-        // TODO: populate Bluetooth device name
         TextView textBtName = (TextView)findViewById(R.id.text_btname);
         String btInfo = prefs.getString(PREFS_KEY_LAST_BLUETOOTH_DEVICE_INFO, null);
         if (btInfo == null) {
@@ -276,16 +273,6 @@ public class BluetoothAlarm extends Activity {
             mService.stop();
         }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
-    }
-
-    private final void setStatus(int resId) {
-        final ActionBar actionBar = getActionBar();
-        actionBar.setSubtitle(resId);
-    }
-
-    private final void setStatus(CharSequence subTitle) {
-        final ActionBar actionBar = getActionBar();
-        actionBar.setSubtitle(subTitle);
     }
 
     // The Handler that gets information back from the BluetoothService

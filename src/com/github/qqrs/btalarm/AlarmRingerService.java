@@ -15,7 +15,7 @@ public class AlarmRingerService extends Service
 	
 	private boolean mIsAlarmActive = false;
 	
-	// onStart is deprecated but onStartCommand does not launch as foreground by default 
+	// onStart is deprecated but onStartCommand does not launch as a foreground process by default 
 	@Override
 	public void onStart(Intent intent, int startid)
 	{
@@ -73,7 +73,6 @@ public class AlarmRingerService extends Service
 	}
 	
 	private void sendAlarmOnCmd() {
-        // TODO: read preferences and start appropriate ringer
         SharedPreferences prefs = getSharedPreferences(BluetoothAlarm.PREFS_NAME, Context.MODE_PRIVATE);
         int ringStyle = prefs.getInt(BluetoothAlarm.PREFS_KEY_RING_STYLE, BluetoothAlarm.RING_STYLE_CONTINUOUS);
         switch(ringStyle) {
@@ -107,9 +106,9 @@ public class AlarmRingerService extends Service
 						break;
 					}
 					
-					RN41Gpio.sendCmd(AlarmRingerService.this, service, messages[i]);
+					RN41Gpio.sendCmd(app, service, messages[i]);
 
-                    // repeat starting at command with specified index, otherwise only run the sequence once
+                    // repeat, starting at command with specified index -- otherwise only run the sequence once
                     if (i == messages.length -1 && repeatIndex >= 0 && repeatIndex < messages.length) {
                     	i = repeatIndex - 1;
                     }
@@ -129,7 +128,7 @@ public class AlarmRingerService extends Service
 	}
 	
 	// The Handler that gets information back from the BluetoothService
-    private final Handler mHandler = new Handler() {
+	private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
@@ -164,5 +163,12 @@ public class AlarmRingerService extends Service
 	public IBinder onBind(Intent arg0) {
 		return null;
 	}
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        ((BtAlarmApplication)getApplicationContext()).alarmThread = null;
+    }
 
 }

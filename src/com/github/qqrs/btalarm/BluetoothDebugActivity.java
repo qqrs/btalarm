@@ -165,17 +165,13 @@ public class BluetoothDebugActivity extends Activity {
         if(D) Log.e(TAG, "-- ON STOP --");
         
         mService.removeHandler(mHandler);
+        mService.stop();        // disconnect from Bluetooth device
         mService = null;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        // Stop the Bluetooth chat services
-
-        if (mService != null) {
-            mService.stop();
-        }
         if(D) Log.e(TAG, "--- ON DESTROY ---");
     }
 
@@ -258,7 +254,6 @@ public class BluetoothDebugActivity extends Activity {
                 byte[] readBuf = (byte[]) msg.obj;
                 // construct a string from the valid bytes in the buffer
                 String readMessage = new String(readBuf, 0, msg.arg1);
-                // TODO: make sure to set mConnectedDeviceName
                 mConversationArrayAdapter.add(mConnectedDeviceName+":  " + readMessage);
                 break;
             case BluetoothService.MESSAGE_DEVICE_NAME:
